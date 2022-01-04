@@ -1,13 +1,9 @@
-FROM centos:8
-MAINTAINER Qi, Chengri (Eason) <chengri.a.qi@rakuten.com>
+FROM centos:7
+MAINTAINER Songir <songir@163.com>
 
 RUN yum -y install epel-release && yum -y update \
-    && yum -y install git libtool ruby ruby-devel xz gcc gcc-c++ automake zlib-devel openssl* make zlib-devel lzo-devel
-RUN dnf -y --enablerepo=powertools install lua-devel
-
-RUN yum -y install ruby ruby-devel ruby-libs rubygems
-RUN gem install bundler
-
+    && yum -y install git libtool ruby ruby-devel ruby-libs rubygems xz gcc gcc-c++ automake zlib-devel openssl* make zlib-devel lzo-devel
+RUN yum -y install lua-devel
 
 ENV CFLAGS="-std=c++98"
 ENV CXXFLAGS="-std=c++98"
@@ -58,12 +54,27 @@ RUN git clone https://github.com/jubatus/jubatus-msgpack-rpc.git /tmp/build \
    && ln -s libjubatus_msgpack-rpc.so.0.4.2 libmsgpack-rpc.so.0 \
    && echo "Symlink created for libmsgpack-rpc."
 
-RUN gem install mplex --no-document \
+#RUN gem install mplex --no-document \
+#    && gem install polyglot --no-document \
+#    && gem install treetop --no-document \
+#    && echo "Installed GEM packages for msgpack-rpc."
+
+RUN yum -y remove ruby ruby-devel  ruby-libs rubygems
+RUN yum install -y centos-release-scl
+RUN yum install -y rh-ruby27 rh-ruby27-ruby-devel which \
+    && scl enable rh-ruby27 bash
+
+COPY rh-ruby.sh /etc/profile.d/rh-ruby.sh
+
+RUN source scl_source enable rh-ruby27 && ruby -v
+
+RUN source scl_source enable rh-ruby27 && gem install mplex --no-document \
     && gem install polyglot --no-document \
     && gem install treetop --no-document \
     && echo "Installed GEM packages for msgpack-rpc."
 
 RUN echo "Install msgpack-idl..."  \
+    && source scl_source enable rh-ruby27 \
     && git clone https://github.com/msgpack-rpc/msgpack-rpc.git /tmp/build  \
     && cd /tmp/build \
     && git checkout cpp-0.3.1 \
@@ -76,6 +87,7 @@ RUN echo "Install msgpack-idl..."  \
 
 RUN git clone https://github.com/frsyuki/kt-msgpack.git /tmp/build
 RUN cd /tmp/build \
+    && source scl_source enable rh-ruby27 \
     && ./bootstrap \
     && CPPFLAGS="-I/usr/local/include/ -I/usr/local/include/jubatus/ -L/usr/local/lib/ " ./configure --with-kc=/usr/local/  \
     && make && make install \
