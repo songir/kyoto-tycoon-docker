@@ -14,7 +14,7 @@ https://dbmx.net/kyototycoon/
 
 
 ## Base
-Centos 8
+Centos 7, 8
 
 
 
